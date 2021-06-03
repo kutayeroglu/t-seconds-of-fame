@@ -2,50 +2,89 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/syscall.h>
+#include <string.h>
 
 #define NUM_OF_COMMENTATORS 5
 pthread_mutex_t hello_msg_lock = PTHREAD_MUTEX_INITIALIZER; 
 pthread_cond_t msg_created_cond = PTHREAD_COND_INITIALIZER; 
 char * HELLO_MESSAGE; 
-int msg_initialized = 0; 
+int msg_initialized = 0;
+int q_num;
+int current_q;
+int prob;
+int num_commentator;
+int t_speak;
+int all_done;
+int visited;
 
 
 void *moderator_function(void *arg){
+
+//-n 5 -q 2 -p 1 -t 1
+  //visited = 1;
+  int i=0;
+  while (all_done==num_commentator && i<q_num) {
+  	all_done=0;
+  	pthread_mutex_lock(&hello_msg_lock);
+	msg_initialized = 1;
+	printf("Moderator asks question %d\n", current_q);
+	pthread_cond_signal(&msg_created_cond); 
+	pthread_mutex_unlock(&hello_msg_lock);
+ 	i++;
+ 	if (all_done==num_commentator) {
+ 		current_q++;
+ 	}
+  }
+
   
   
-  pthread_mutex_lock(&hello_msg_lock);
-  msg_initialized = 1;
-  printf("Questionnn\n");
-
-  pthread_cond_signal(&msg_created_cond); 
-  pthread_mutex_unlock(&hello_msg_lock); 
-
 }
 
 void *commentator_function (void *arg) {
+//	printf("this is commentator %d\n", current_q);
     int threadNum = (int)arg;
     pid_t tid = syscall(SYS_gettid);
+    int q_left[q_num];
     
-
-    pthread_mutex_lock(&hello_msg_lock);
-    printf("%d", msg_initialized); 
-    while(msg_initialized == 0){
-        pthread_cond_wait(&msg_created_cond,&hello_msg_lock);   
+    for (int i=0; i<q_num; i++) {
+    	q_left[i]=1;
     }
-    printf("I am in thread no : %d with Thread ID : %d\n",threadNum,(int)tid);
-    pthread_mutex_unlock(&hello_msg_lock); 
-    pthread_cond_signal(&msg_created_cond);
     
+	while (q_left[current_q-1]==1) {
+	    pthread_mutex_lock(&hello_msg_lock);
+//	    printf("%d", msg_initialized); 
+	    while(msg_initialized == 0){
+		pthread_cond_wait(&msg_created_cond,&hello_msg_lock);   
+	    }
+	    printf("I am in thread no : %d answering question %d\n",threadNum, current_q);
+	    all_done++;
+	    pthread_mutex_unlock(&hello_msg_lock); 
+	    pthread_cond_signal(&msg_created_cond);
+    	    q_left[current_q-1]=0;
+    	    
+	}
 
 }
 
 int main(int argc, char *argv[]){
 
-    pthread_t commentators[NUM_OF_COMMENTATORS];    
+//    char* input[256];
+    char* dummy1;
+    char* dummy2;
+    char* dummy3;
+    char* dummy4;
+    printf("Please enter: -n [commentators] -q [questions] -p [probability] -t [time]\n");
+    scanf("%s %d %s %d %s %d %s %d", &dummy1, &num_commentator, &dummy2, &q_num, &dummy3, &prob, &dummy4, &t_speak);
+    
+    current_q=1;
+    all_done=num_commentator;
+    //visited=0;
+
+    pthread_t commentators[num_commentator];    
     pthread_t moderator[1];
 
     int creation_status = 0;
-    for (int i=0; i<NUM_OF_COMMENTATORS; i++){
+    for (int i=0; i<num_commentator; i++){
         pthread_t thread;
         commentators[i] = thread; 
         creation_status = pthread_create(&commentators[i], NULL, commentator_function, (void *)i);
@@ -59,3 +98,56 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+
+
+
+/*
+printf("%s", input);
+    if (input==NULL) {
+    	return 0;
+    } else {
+    	char *token;
+    	token = strtok(input, " \t");
+    	printf("%s", token);
+    	while (token!=NULL) {
+    		if (strcmp(token, "-q")==0) {
+    			token = strtok(NULL, input);
+    			if (token!=NULL) { //check if integer
+    				q_num = atoi(token);
+    			} else {
+    				printf("Wrong input format\n");
+    				return 0;
+    			}
+    		} else if (strcmp(token, "-p")==0) {
+    			token = strtok(NULL, input);
+    			if (token!=NULL) { //some other exceptions we can check
+    				prob = atoi(token);
+    			} else {
+    				printf("Wrong input format\n");
+    				return 0;
+    			}
+    		} else if (strcmp(token, "-n")==0) {
+    			token = strtok(NULL, input);
+    			printf("%s", token);
+    			if (token!=NULL) { //some other exceptions we can check
+    				num_commentator = atoi(token);
+    			} else {
+    				printf("Wrong input format\n");
+    				return 0;
+    			}
+    		} else if (strcmp(token, "-t")==0) {
+    			token = strtok(NULL, input);
+    			if (token!=NULL) { //some other exceptions we can check
+    				t_speak = atoi(token);
+    			} else {
+    				printf("Wrong input format\n");
+    				return 0;
+    			}
+    		} else {
+    			printf("Wrong input format\n");
+    			return 0;
+    		}
+    		token = strtok(NULL, input);
+    	}
+    }
+*/
