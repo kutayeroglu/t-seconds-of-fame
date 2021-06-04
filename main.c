@@ -11,7 +11,7 @@ char * HELLO_MESSAGE;
 int msg_initialized = 0;
 int q_num;
 int current_q;
-int prob;
+float prob;
 int num_commentator;
 int t_speak;
 int all_done;
@@ -35,9 +35,6 @@ void *moderator_function(void *arg){
  		current_q++;
  	}
   }
-
-  
-  
 }
 
 void *commentator_function (void *arg) {
@@ -69,13 +66,42 @@ void *commentator_function (void *arg) {
 int main(int argc, char *argv[]){
 
 //    char* input[256];
-    char* dummy1;
-    char* dummy2;
-    char* dummy3;
-    char* dummy4;
-    printf("Please enter: -n [commentators] -q [questions] -p [probability] -t [time]\n");
-    scanf("%s %d %s %d %s %d %s %d", &dummy1, &num_commentator, &dummy2, &q_num, &dummy3, &prob, &dummy4, &t_speak);
-    
+    char dummy1[50];
+	int param_counter = 1; 
+
+    printf("Please enter: -n [commentators] -p [probability] -q [questions]  -t [time]\n");
+	scanf("%[^\n]", dummy1);
+	char* token = strtok(dummy1, " ");
+
+	do{
+		if((strcmp("-n", token)==0) || (strcmp("-p", token)==0) ||  (strcmp("-q", token)==0) || (strcmp("-t", token)==0)) {
+			token = strtok(NULL, " ");
+			continue;
+		}
+
+		if(param_counter == 1){
+			num_commentator = atoi(token);
+		} 
+		else if (param_counter == 2){
+			prob = atof(token);
+		}
+		else if (param_counter == 3){
+			q_num = atoi(token);
+		}
+		else if (param_counter == 4){
+			t_speak = atoi(token);
+		}
+
+		token = strtok(NULL, " ");
+		param_counter++;
+	}
+	while(token != NULL && param_counter < 5);
+
+	printf("%d\n", num_commentator);
+	printf("%f\n", prob);
+	printf("%d\n", q_num);
+	printf("%d\n", t_speak);
+
     current_q=1;
     all_done=num_commentator;
     //visited=0;
