@@ -7,11 +7,12 @@
 #define NUM_OF_COMMENTATORS 5
 pthread_mutex_t hello_msg_lock = PTHREAD_MUTEX_INITIALIZER; 
 pthread_cond_t msg_created_cond = PTHREAD_COND_INITIALIZER; 
+pthread_cond_t all_done_cond = PTHREAD_COND_INITIALIZER;
 char * HELLO_MESSAGE; 
 int msg_initialized = 0;
 int q_num;
 int current_q;
-int prob;
+float prob;
 int num_commentator;
 int t_speak;
 int all_done;
@@ -21,19 +22,24 @@ int visited;
 void *moderator_function(void *arg){
 
 //-n 5 -q 2 -p 1 -t 1
-  //visited = 1;
+  visited = 0;
   int i=0;
-  while (all_done==num_commentator && i<q_num) {
-  	all_done=0;
+  
+  
+  while (i<q_num) {
   	pthread_mutex_lock(&hello_msg_lock);
+  	while(all_done<num_commentator){
+	   pthread_cond_wait(&all_done_cond,&hello_msg_lock);   
+  	}
+  	printf("here\n");
+  	all_done=0;
+  	if (visited==1) {current_q++;}
 	msg_initialized = 1;
 	printf("Moderator asks question %d\n", current_q);
+ 	if (visited==0) {visited=1;}
 	pthread_cond_signal(&msg_created_cond); 
 	pthread_mutex_unlock(&hello_msg_lock);
  	i++;
- 	if (all_done==num_commentator) {
- 		current_q++;
- 	}
   }
 
   
@@ -49,8 +55,8 @@ void *commentator_function (void *arg) {
     for (int i=0; i<q_num; i++) {
     	q_left[i]=1;
     }
-    
-	while (q_left[current_q-1]==1) {
+    while(1==1) {
+	if (q_left[current_q-1]==1) {
 	    pthread_mutex_lock(&hello_msg_lock);
 //	    printf("%d", msg_initialized); 
 	    while(msg_initialized == 0){
@@ -58,11 +64,17 @@ void *commentator_function (void *arg) {
 	    }
 	    printf("I am in thread no : %d answering question %d\n",threadNum, current_q);
 	    all_done++;
+	    printf("all done: %d\n", all_done);
+	    if(all_done==num_commentator) {
+    	    	pthread_cond_signal(&all_done_cond);
+//    	    	msg_initialized
+    	    }
 	    pthread_mutex_unlock(&hello_msg_lock); 
 	    pthread_cond_signal(&msg_created_cond);
     	    q_left[current_q-1]=0;
-    	    
+    	    if(current_q==q_num){break;}//printf("about to break\n");
 	}
+    }
 
 }
 
@@ -74,7 +86,7 @@ int main(int argc, char *argv[]){
     char* dummy3;
     char* dummy4;
     printf("Please enter: -n [commentators] -q [questions] -p [probability] -t [time]\n");
-    scanf("%s %d %s %d %s %d %s %d", &dummy1, &num_commentator, &dummy2, &q_num, &dummy3, &prob, &dummy4, &t_speak);
+    scanf("%s %d %s %d %s %f %s %d", &dummy1, &num_commentator, &dummy2, &q_num, &dummy3, &prob, &dummy4, &t_speak);
     
     current_q=1;
     all_done=num_commentator;
