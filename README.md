@@ -4,14 +4,14 @@ COMP304 Operating Systems Project 2- Scheduling, synchronisation, multi-threadin
 Summary
 --
 What works:
-PART1
+PART1 and PART2 works as described in the pdf.
 
 What partially works: 
-PART2
+Logging.
 
 What does not work:
-When a breaking news event occur the current commentator is interrupted. However, during the the breaking news event commentators can still talk.
+-
 
 0 answers case:
 
-Breaking news event:
+Breaking news event: Works as intended.
