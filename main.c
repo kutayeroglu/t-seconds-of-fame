@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include "pthread_sleep_v2(1).c";
 
 #define NUM_OF_COMMENTATORS 5
 pthread_mutex_t hello_msg_lock = PTHREAD_MUTEX_INITIALIZER; 
@@ -30,13 +31,11 @@ void *moderator_function(void *arg){
   visited = 0;
   int i=0;
   
-  
   while (i<q_num) {
   	pthread_mutex_lock(&hello_msg_lock);
   	while(all_done<num_commentator){
 	   pthread_cond_wait(&all_done_cond,&hello_msg_lock);   
-  	}
-//  	printf("here\n");
+	}
   	all_done=0;
   	if (visited==1) {current_q++;}
 	msg_initialized = 1;
@@ -53,7 +52,8 @@ void *commentator_function (void *arg) {
     int threadNum = (int)arg;
     pid_t tid = syscall(SYS_gettid);
     int q_left[q_num];
-    
+	float talk_duration = ((float)rand()/(float)(RAND_MAX)) * t_speak; 
+
     for (int i=0; i<q_num; i++) {
     	q_left[i]=1;
     }
@@ -67,6 +67,8 @@ void *commentator_function (void *arg) {
 	    if(rand() <  prob * RAND_MAX) {
 	    	current_c= threadNum;
 	    	printf("I am in thread no : %d answering question %d\n",threadNum, current_q);
+			pthread_sleep(talk_duration);
+			printf("Commentator #%d's turn to speak for %f  seconds\n", threadNum, talk_duration);
 	    }
 	    all_done++;
 //	    printf("all done: %d\n", all_done);
@@ -92,7 +94,6 @@ void *breaking_function (void *arg) {
 //  printf("all done: %d current_q: %d\n", all_done, current_q);
     
     while(all_done!=num_commentator&&current_q!=q_num) {
-        printf("here 1\n");
         gettimeofday(&now, NULL);
         waitFor.tv_sec = now.tv_sec;
         waitFor.tv_nsec = now.tv_usec*1000;
@@ -100,11 +101,10 @@ void *breaking_function (void *arg) {
         pthread_mutex_lock(&breaking_lock);
         int r = pthread_cond_timedwait(&breaking_cond, &breaking_lock, &waitFor);
         pthread_mutex_unlock(&breaking_lock);
-        printf("here 2\n");
     	if(rand() <  0.5 * RAND_MAX) {
     		printf("Breaking news!\n");
     		printf("Commentator #%d is cut short due to breaking news\n", current_c);
-    		sleep(5);
+    		pthread_sleep(5);
     		printf("Breaking news ends\n");
     		
     	}
