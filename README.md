@@ -10,8 +10,3 @@ What partially works:
 Logging.
 
 What does not work:
--
-
-0 answers case:
-
-Breaking news event: Works as intended.
