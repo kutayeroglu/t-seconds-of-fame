@@ -1,5 +1,5 @@
 # t-seconds-of-fame
-COMP304 Operating Systems Project 2- Scheduling, synchronisation, multi-threading and deadlock prevention
+COMP304 Operating Systems Project 2- Scheduling, synchronization, multi-threading and deadlock prevention
 --
 Summary
 --
